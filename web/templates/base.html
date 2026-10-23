@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}World Countries Dashboard{% endblock %}</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root { --bg:#f6f4ef; --card:#fff; --ink:#1f2328; --muted:#6b6f76; --line:#e4e0d8;
+          --accent:#7a3e1d; --ok:#2e7d32; --warn:#b26a00; --bad:#c62828; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:'Sarabun',system-ui,sans-serif; background:var(--bg); color:var(--ink); }
+  header { background:#2b1d14; color:#fff; padding:14px 24px; display:flex; gap:24px; align-items:center; flex-wrap:wrap; }
+  header h1 { font-size:20px; margin:0; }
+  header nav a { color:#f1d9c4; margin-right:16px; text-decoration:none; font-weight:600; }
+  header nav a.active { color:#fff; border-bottom:2px solid #f1d9c4; }
+  main { max-width:1200px; margin:0 auto; padding:20px 16px 40px; }
+  .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom:16px; }
+  .kpi { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px; }
+  .kpi .v { font-size:28px; font-weight:700; color:var(--accent); }
+  .kpi .l { color:var(--muted); font-size:14px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; margin-bottom:16px; }
+  .grid2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:16px; }
+  form.filters { display:flex; flex-wrap:wrap; gap:10px; align-items:end; }
+  form.filters label { display:flex; flex-direction:column; font-size:13px; color:var(--muted); gap:4px; }
+  input, select, button { font:inherit; padding:7px 10px; border:1px solid var(--line); border-radius:6px; }
+  button { background:var(--accent); color:#fff; border:none; cursor:pointer; }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  th, td { padding:7px 8px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; }
+  th { background:#faf8f4; position:sticky; top:0; }
+  .tablewrap { max-height:560px; overflow:auto; }
+  .tag { display:inline-block; font-size:12px; padding:1px 7px; border-radius:10px; margin:1px; background:#efe6dc; }
+  .tag.scrapethissite { background:#e3f2fd; } .tag.restcountries { background:#e8f5e9; } .tag.worldbank { background:#fff3e0; }
+  .st { font-weight:700; } .st.success{color:var(--ok);} .st.partial{color:var(--warn);} .st.dq_failed{color:var(--bad);}
+  .muted { color:var(--muted); font-size:13px; }
+  a { color:var(--accent); }
+</style>
+</head>
+<body>
+<header>
+  <h1>🌍 World Countries — รวมข้อมูลประเทศจาก 3 แหล่ง</h1>
+  <nav>
+    <a href="/" class="{{ 'active' if request.path == '/' }}">Dashboard</a>
+    <a href="/status" class="{{ 'active' if request.path == '/status' }}">Pipeline Status</a>
+  </nav>
+</header>
+<main>
+{% block content %}{% endblock %}
+</main>
+</body>
+</html>

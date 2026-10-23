@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Pipeline Status{% endblock %}
+{% block content %}
+{% if not ready %}
+  <div class="card"><h2>ยังไม่มีประวัติการรัน</h2><p>Trigger DAG <b>countries_pipeline</b> ใน Airflow ก่อน</p></div>
+{% else %}
+{% set last = runs[0] if runs else None %}
+<div class="kpis">
+  <div class="kpi"><div class="v st {{ last.status if last }}">{{ last.status if last else '-' }}</div><div class="l">สถานะรอบล่าสุด</div></div>
+  <div class="kpi"><div class="v">{{ last.rows_extracted if last else '-' }}</div><div class="l">แถวที่ดึงได้รอบล่าสุด</div></div>
+  <div class="kpi"><div class="v">{{ last.duplicates if last else '-' }}</div><div class="l">รายการซ้ำข้ามแหล่ง</div></div>
+  <div class="kpi"><div class="v">{{ last.rejected if last else '-' }}</div><div class="l">แถวไม่ผ่าน DQ</div></div>
+</div>
+
+<div class="grid2">
+  <div class="card"><h3>สุขภาพแหล่งข้อมูล (รอบล่าสุด)</h3>
+    <table><tr><th>แหล่ง</th><th>แถวรอบล่าสุด</th><th>สถานะ</th></tr>
+    {% for s in sources %}
+      {% set n = (last.source_counts or {}).get(s, 0) if last else 0 %}
+      {% set bad = last and last.failed_sources and s in last.failed_sources %}
+      <tr><td>{{ labels[s] }}</td><td>{{ n }}</td>
+          <td class="st {{ 'dq_failed' if bad else 'success' }}">{{ '✖ ล้มเหลว' if bad else '✔ ปกติ' }}</td></tr>
+    {% endfor %}
+    </table></div>
+  <div class="card"><h3>ข้อมูลสะสมใน PostgreSQL</h3>
+    <table><tr><th>แหล่ง</th><th>รายการ</th><th>ดึงล่าสุด (UTC)</th></tr>
+    {% for r in per_source %}<tr><td>{{ labels[r.source] }}</td><td>{{ r.n }}</td><td>{{ r.last_fetch.strftime('%Y-%m-%d %H:%M') }}</td></tr>{% endfor %}
+    </table>
+    <h3>เหตุผลที่ไม่ผ่าน Data Quality</h3>
+    {% if rejects %}<table><tr><th>เหตุผล</th><th>แหล่ง</th><th>จำนวน</th></tr>
+      {% for r in rejects %}<tr><td>{{ r.reason }}</td><td>{{ r.source }}</td><td>{{ r.n }}</td></tr>{% endfor %}</table>
+    {% else %}<p class="muted">ไม่มีแถวที่ถูกปฏิเสธ</p>{% endif %}
+  </div>
+</div>
+
+<div class="card"><h3>ประวัติการรัน DAG (20 รอบล่าสุด)</h3>
+<div class="tablewrap"><table>
+  <thead><tr><th>Run ID</th><th>เสร็จเมื่อ (UTC)</th><th>สถานะ</th><th>DQ</th><th>ดึงได้</th><th>ประเทศ unique</th><th>ซ้ำ</th><th>Reject</th><th>หมายเหตุ</th></tr></thead>
+  {% for r in runs %}
+  <tr><td style="font-size:12px">{{ r.run_id }}</td><td>{{ r.finished_at.strftime('%Y-%m-%d %H:%M') }}</td>
+      <td class="st {{ r.status }}">{{ r.status }}</td><td>{{ '✔' if r.dq_passed else '✖' }}</td>
+      <td>{{ r.rows_extracted }}</td><td>{{ r.unique_countries }}</td><td>{{ r.duplicates }}</td><td>{{ r.rejected }}</td>
+      <td class="muted">{{ r.message }}</td></tr>
+  {% endfor %}
+</table></div></div>
+{% endif %}
+{% endblock %}

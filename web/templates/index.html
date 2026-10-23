@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block content %}
+{% if empty %}
+  <div class="card"><h2>ยังไม่มีข้อมูล</h2>
+  <p>เปิด Airflow ที่ <a href="http://localhost:8080">localhost:8080</a> แล้ว Trigger DAG <b>countries_pipeline</b> จากนั้นรีเฟรชหน้านี้</p></div>
+{% else %}
+
+<div class="kpis">
+  <div class="kpi"><div class="v">{{ kpi.countries }}</div><div class="l">ประเทศ/ดินแดน (หลังตัดซ้ำ)</div></div>
+  <div class="kpi"><div class="v">{{ listings|num }}</div><div class="l">รายการดิบจากทุกแหล่ง</div></div>
+  <div class="kpi"><div class="v">{{ (kpi.population|float / 1e9)|num(2) }} พันล้าน</div><div class="l">ประชากรรวม</div></div>
+  <div class="kpi"><div class="v">${{ kpi.avg_gdp|num }}</div><div class="l">GDP ต่อหัวเฉลี่ย{% if kpi.wb_year %} (≈{{ kpi.wb_year }}){% endif %}</div></div>
+  <div class="kpi"><div class="v">{{ kpi.all3 }}</div><div class="l">พบครบทั้ง 3 แหล่ง</div></div>
+</div>
+
+<div class="card">
+  <form class="filters" method="get">
+    <label>ค้นหาประเทศ/เมืองหลวง/ISO3 <input name="q" value="{{ f.q }}" placeholder="เช่น Thailand, THA"></label>
+    <label>ภูมิภาค
+      <select name="region"><option value="">ทั้งหมด</option>
+        {% for r in regions %}<option value="{{ r }}" {{ 'selected' if f.region == r }}>{{ r }}</option>{% endfor %}
+      </select></label>
+    <label>แหล่งข้อมูล
+      <select name="source"><option value="">ทั้งหมด</option>
+        {% for s in sources %}<option value="{{ s }}" {{ 'selected' if f.source == s }}>{{ labels[s] }}</option>{% endfor %}
+      </select></label>
+    <label>ประชากรขั้นต่ำ (ล้านคน) <input name="min_pop" value="{{ f.min_pop }}" size="6" placeholder="เช่น 10"></label>
+    <label>เรียงตาม
+      <select name="sort">
+        {% for k, v in [('population','ประชากร'),('gdp','GDP ต่อหัว'),('area','พื้นที่'),('density','ความหนาแน่น'),('sources','จำนวนแหล่ง'),('name','ชื่อ')] %}
+        <option value="{{ k }}" {{ 'selected' if f.sort == k }}>{{ v }}</option>{% endfor %}
+      </select></label>
+    <label style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" name="multi" value="1" {{ 'checked' if f.multi }}> เฉพาะที่พบครบ 3 แหล่ง</label>
+    <button type="submit">กรอง</button> <a href="/">ล้างตัวกรอง</a>
+  </form>
+  {% if last_run %}<p class="muted">อัปเดตล่าสุด: {{ last_run.finished_at.strftime('%Y-%m-%d %H:%M') }} UTC · สถานะ <span class="st {{ last_run.status }}">{{ last_run.status }}</span></p>{% endif %}
+</div>
+
+<div class="grid2">
+  <div class="card"><h3>ประชากรรวมตามภูมิภาค</h3><canvas id="cRegion"></canvas></div>
+  <div class="card"><h3>Top 10 GDP ต่อหัว (US$, World Bank)</h3><canvas id="cGdp"></canvas></div>
+  <div class="card"><h3>จำนวนประเทศตามแหล่ง</h3><canvas id="cSource"></canvas></div>
+  <div class="card"><h3>ประเทศพบในกี่แหล่ง (ผลการตัดซ้ำ)</h3><canvas id="cOverlap"></canvas></div>
+</div>
+
+<div class="card">
+  <h3>ตารางประเทศ ({{ rows|length }})</h3>
+  <p class="muted">ประชากรหลักใช้ World Bank → REST Countries → scrapethissite ตามลำดับ · 3 คอลัมน์ขวาเทียบประชากรที่แต่ละแหล่งรายงาน</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>ประเทศ</th><th>ISO3</th><th>เมืองหลวง</th><th>ภูมิภาค</th><th>ประชากร</th><th>พื้นที่ (km²)</th><th>คน/km²</th><th>GDP/หัว ($)</th><th>Pop: scrape</th><th>Pop: REST</th><th>Pop: WB</th><th>แหล่ง</th></tr></thead>
+    <tbody>
+    {% for c in rows %}
+      <tr><td><b>{{ c.name }}</b></td><td>{{ c.iso3 or '-' }}</td><td>{{ c.capital or '-' }}</td><td>{{ c.region or '-' }}</td>
+        <td>{{ c.population|num }}</td><td>{{ c.area_km2|num }}</td><td>{{ c.density|num(1) }}</td><td>{{ c.gdp_per_capita|num }}</td>
+        <td class="muted">{{ c.pop_scrape|num }}</td><td class="muted">{{ c.pop_restcountries|num }}</td><td class="muted">{{ c.pop_worldbank|num }}</td>
+        <td>{% for s in c.sources %}<span class="tag {{ s }}">{{ s }}</span>{% endfor %}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</div>
+
+<script>
+const C = {{ charts|tojson }};
+const color = {scrapethissite:'#64b5f6', restcountries:'#66bb6a', worldbank:'#ffa726'};
+const opts = {plugins:{legend:{display:false}}};
+new Chart(cRegion, {type:'bar', data:{labels:C.region.labels, datasets:[{data:C.region.values, backgroundColor:'#3f6e8c'}]}, options:opts});
+new Chart(cGdp, {type:'bar', data:{labels:C.gdp.labels, datasets:[{data:C.gdp.values, backgroundColor:'#ffa726'}]}, options:opts});
+new Chart(cSource, {type:'bar', data:{labels:C.source.labels, datasets:[{data:C.source.values, backgroundColor:C.source.labels.map(s=>color[s]||'#999')}]}, options:opts});
+new Chart(cOverlap, {type:'bar', data:{labels:C.overlap.labels, datasets:[{data:C.overlap.values, backgroundColor:'#8d6e63'}]}, options:opts});
+</script>
+{% endif %}
+{% endblock %}

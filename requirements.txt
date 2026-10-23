@@ -1,0 +1,8 @@
+# DAG (ติดตั้งใน image Airflow 2.10.5 ผ่าน _PIP_ADDITIONAL_REQUIREMENTS; requests/psycopg2 มีใน image แล้ว)
+apache-airflow==2.10.5
+requests>=2.31
+beautifulsoup4==4.12.3
+psycopg2-binary>=2.9
+
+# Web dashboard
+flask==3.0.3
