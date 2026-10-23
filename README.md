@@ -9,7 +9,7 @@
 | # | แหล่ง | วิธีดึง | ข้อมูลที่ได้ | จำนวนโดยประมาณ |
 |---|---|---|---|---|
 | 1 | [scrapethissite.com/pages/simple](https://www.scrapethissite.com/pages/simple/) | **Web scraping** (requests + BeautifulSoup, ไม่ใช้ Selenium) ตรวจ robots.txt ก่อนดึง | ชื่อ เมืองหลวง ประชากร พื้นที่ | 250 |
-| 2 | [REST Countries API v3.1](https://restcountries.com) | REST API (JSON) | ชื่อ ISO3 เมืองหลวง ภูมิภาค ประชากร พื้นที่ | 250 |
+| 2 | [REST Countries](https://studies.cs.helsinki.fi/restcountries/) (mirror ของ University of Helsinki เพราะ restcountries.com v3.1 ถูกยกเลิกและ v5 ต้องใช้ API key) | REST API (JSON) | ชื่อ ISO3 เมืองหลวง ภูมิภาค ประชากร พื้นที่ | 250 |
 | 3 | [World Bank Indicators API](https://datahelpdesk.worldbank.org/knowledgebase/articles/889392) | REST API (JSON) ตัวชี้วัด `SP.POP.TOTL`, `NY.GDP.PCAP.CD` (ค่าล่าสุด) | ประชากร GDP ต่อหัว ปีข้อมูล | ~217 (ตัดกลุ่มภูมิภาค/aggregate ออก) |
 
 รวมกว่า 700 รายการดิบ → ประมาณ 250 ประเทศ/ดินแดนหลังตัดซ้ำ · เป็นสถิติระดับประเทศ **ไม่มีข้อมูลส่วนบุคคล** สอดคล้อง PDPA
